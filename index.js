@@ -9,11 +9,18 @@ const TILE_SCALE = 4;
 const TILE_DRAW_SIZE = TILE_SIZE * TILE_SCALE;
 const FILL_TILE_INDEX = 1;
 const EMPTY_TILE_INDEX = -1;
-const MOVE_INTERVAL = 0.12;
+const MOVE_INTERVAL = 0.15;
 
 const pressedKeys = new Set();
 let activeDirectionKey = null;
-let moveAccumulator = 0;
+const movementState = {
+  isMoving: false,
+  startX: 0,
+  startY: 0,
+  targetX: 0,
+  targetY: 0,
+  elapsed: 0,
+};
 
 function createFilledWorldMap(tileIndex = FILL_TILE_INDEX) {
   const columns = Math.ceil(canvas.width / TILE_DRAW_SIZE);
@@ -59,9 +66,8 @@ window.addEventListener("keydown", (event) => {
     pressedKeys.add(key);
     activeDirectionKey = key;
 
-    if (!wasAlreadyPressed) {
-      movePlayerByKey(activeDirectionKey);
-      moveAccumulator = 0;
+    if (!wasAlreadyPressed && !movementState.isMoving) {
+      startMoveByKey(activeDirectionKey);
     }
   }
 });
@@ -75,24 +81,35 @@ window.addEventListener("keyup", (event) => {
   if (key === activeDirectionKey) {
     activeDirectionKey = getLatestPressedMovementKey();
   }
-
-  if (!activeDirectionKey) {
-    moveAccumulator = 0;
-  }
 });
 
 function update(deltaTime) {
-  if (!activeDirectionKey) return;
+  if (movementState.isMoving) {
+    movementState.elapsed += deltaTime;
+    const progress = Math.min(movementState.elapsed / MOVE_INTERVAL, 1);
 
-  moveAccumulator += deltaTime;
+    player.x =
+      movementState.startX +
+      (movementState.targetX - movementState.startX) * progress;
+    player.y =
+      movementState.startY +
+      (movementState.targetY - movementState.startY) * progress;
 
-  while (moveAccumulator >= MOVE_INTERVAL) {
-    movePlayerByKey(activeDirectionKey);
-    moveAccumulator -= MOVE_INTERVAL;
+    if (progress >= 1) {
+      player.x = movementState.targetX;
+      player.y = movementState.targetY;
+      movementState.isMoving = false;
+      movementState.elapsed = 0;
+      digTerrainAtPlayer();
+    }
+  }
+
+  if (!movementState.isMoving && activeDirectionKey) {
+    startMoveByKey(activeDirectionKey);
   }
 }
 
-function movePlayerByKey(key) {
+function getDirectionFromKey(key) {
   let dx = 0;
   let dy = 0;
 
@@ -101,15 +118,30 @@ function movePlayerByKey(key) {
   else if (key === "arrowleft" || key === "a") dx = -1;
   else if (key === "arrowright" || key === "d") dx = 1;
 
-  const nextX = player.x + dx * TILE_DRAW_SIZE;
-  const nextY = player.y + dy * TILE_DRAW_SIZE;
+  return { dx, dy };
+}
 
-  player.x = Math.max(0, Math.min(nextX, canvas.width - player.width));
-  player.y = Math.max(0, Math.min(nextY, canvas.height - player.height));
+function startMoveByKey(key) {
+  const { dx, dy } = getDirectionFromKey(key);
+  if (dx === 0 && dy === 0) return;
 
-  if (dx !== 0 || dy !== 0) {
-    digTerrainAtPlayer();
-  }
+  const startX = player.x;
+  const startY = player.y;
+
+  const nextX = startX + dx * TILE_DRAW_SIZE;
+  const nextY = startY + dy * TILE_DRAW_SIZE;
+
+  const clampedX = Math.max(0, Math.min(nextX, canvas.width - player.width));
+  const clampedY = Math.max(0, Math.min(nextY, canvas.height - player.height));
+
+  if (clampedX === startX && clampedY === startY) return;
+
+  movementState.isMoving = true;
+  movementState.startX = startX;
+  movementState.startY = startY;
+  movementState.targetX = clampedX;
+  movementState.targetY = clampedY;
+  movementState.elapsed = 0;
 }
 
 function digTerrainAtPlayer() {
