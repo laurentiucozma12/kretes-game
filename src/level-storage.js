@@ -1,5 +1,5 @@
 const STORAGE_LEVELS_KEY = "kretes_custom_levels_v1";
-export const DEFAULT_LEVEL_NAME = "default";
+export const DEFAULT_LEVEL_NAME = "Default";
 const HAS_FILE_SYSTEM_ACCESS = "showDirectoryPicker" in window;
 
 let projectDirectoryHandle = null;
