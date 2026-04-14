@@ -7,6 +7,38 @@
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
+    <aside class="editor-panel">
+      <h1>Kretes Level Editor</h1>
+
+      <div class="field-row">
+        <label for="levelName">Level name</label>
+        <input id="levelName" type="text" placeholder="ex: cave-1" />
+      </div>
+
+      <div class="field-row">
+        <label for="levelSelect">Saved levels</label>
+        <select id="levelSelect"></select>
+      </div>
+
+      <div class="button-grid">
+        <button id="newLevelBtn" type="button">New</button>
+        <button id="saveLevelBtn" type="button">Save</button>
+        <button id="loadLevelBtn" type="button">Load</button>
+        <button id="playBtn" type="button">Play</button>
+      </div>
+
+      <div class="button-grid">
+        <button id="exportBtn" type="button">Export JSON</button>
+        <button id="importBtn" type="button">Import JSON</button>
+      </div>
+
+      <p class="help-text">
+        E = toggle edit mode, click = paint tile, right click = erase, P + click
+        = set spawn.
+      </p>
+      <p id="editorStatus" class="status-text">Mode: Play</p>
+    </aside>
+
     <canvas id="canvas" width="1920" height="1080"></canvas>
     <script src="./index.js"></script>
   </body>
